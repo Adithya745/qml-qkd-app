@@ -1,0 +1,8 @@
+__pycache__/
+.env
+.env.local
+.env.production
+*.pyc
+node_modules/
+.vercel/
+.DS_Store
