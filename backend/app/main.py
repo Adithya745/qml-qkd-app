@@ -2,12 +2,33 @@ from fastapi import FastAPI, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
-import os
 from datetime import datetime
+import os
 
 # =========================================================
-# CONFIGURATION
+# APP INIT
+# =========================================================
+
+app = FastAPI(
+    title="Quantum Learning Platform API",
+    description="Backend API for QML & QKD Learning Platform",
+    version="1.0.0"
+)
+
+# =========================================================
+# MIDDLEWARE
+# =========================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =========================================================
+# DATABASE
 # =========================================================
 
 MONGO_URI = os.getenv("MONGO_URI")
@@ -20,33 +41,12 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
 
 # =========================================================
-# FASTAPI APP
+# HEALTH CHECK (RENDER NEEDS THIS)
 # =========================================================
 
-app = FastAPI(
-    title="Quantum Learning Platform API",
-    description="Backend API for QML & QKD Learning Platform",
-    version="1.0.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # OK for now (restrict later)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# =========================================================
-# MODELS
-# =========================================================
-
-class ProgressUpdate(BaseModel):
-    domain: str
-    slug: str
-    readCompleted: bool
-    quizCompleted: bool
-    quizScore: float = 0.0
+@app.get("/healthz")
+async def health():
+    return {"status": "ok"}
 
 # =========================================================
 # ROOT
@@ -152,6 +152,13 @@ async def qkd_protocol(slug: str):
 # USER PROGRESS
 # =========================================================
 
+class ProgressUpdate(BaseModel):
+    domain: str
+    slug: str
+    readCompleted: bool
+    quizCompleted: bool
+    quizScore: float = 0.0
+
 @app.post("/api/me/progress")
 async def update_progress(update: ProgressUpdate):
     user_id = "default_user"
@@ -169,3 +176,4 @@ async def update_progress(update: ProgressUpdate):
     )
 
     return {"status": "success"}
+
